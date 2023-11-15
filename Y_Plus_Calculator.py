@@ -1,5 +1,5 @@
 import streamlit as st
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 import math
 
 def Y_calculator(rho, u, l, mu, y_plus):
@@ -12,6 +12,58 @@ def Y_calculator(rho, u, l, mu, y_plus):
     delta_turb = 0.37 * l / (Re ** (1 / 5))
 
     return y, delta_lam, delta_turb
+
+def calculate_layers(layer, G_r, value_y, value_lam, value_turb, y_desired):
+    layer_thickness = []
+    layer_index = []
+    total_thickness = []
+    total = 0
+
+    for i in range(0, layer):
+        growth_rate = G_r ** i
+        layer_thickness.append(value_y * growth_rate)
+        total += value_y * growth_rate
+        layer_index.append(i)
+        total_thickness.append(total)
+
+    check_lam = [total_thickness[j] - value_lam for j in range(layer)]
+    check_turb = [total_thickness[k] - value_turb for k in range(layer)]
+
+    desired_layer_thickness = []
+    desired_total_thickness = []
+    desired_total = 0
+
+    for q in range(0, layer):
+        desired_layer = G_r**q * y_desired
+        desired_total += desired_layer
+        desired_layer_thickness.append(desired_layer)
+        desired_total_thickness.append(desired_total)
+
+    desired_check_lam = [desired_total_thickness[w] - value_lam for w in range(layer)]
+    desired_check_turb = [desired_total_thickness[v] - value_turb for v in range(layer)]
+
+    return layer_index, layer_thickness, total_thickness, check_lam, check_turb, desired_layer_thickness, desired_total_thickness, desired_check_lam, desired_check_turb
+
+def visualize_layers(layer_index, layer_thickness, total_thickness, check_lam, check_turb, desired_layer_thickness, desired_total_thickness, desired_check_lam, desired_check_turb):
+    fig_layer = go.Figure()
+    fig_layer.add_trace(go.Scatter(x=layer_index, y=layer_thickness, mode='lines', name='Layer'))
+    fig_layer.add_trace(go.Scatter(x=layer_index, y=total_thickness, mode='lines', name='Total'))
+    st.plotly_chart(fig_layer)
+
+    fig_check_re = go.Figure()
+    fig_check_re.add_trace(go.Scatter(x=layer_index, y=check_lam, mode='lines', name='Lam'))
+    fig_check_re.add_trace(go.Scatter(x=layer_index, y=check_turb, mode='lines', name='Turb'))
+    st.plotly_chart(fig_check_re)
+
+    fig_desired_layer = go.Figure()
+    fig_desired_layer.add_trace(go.Scatter(x=layer_index, y=desired_layer_thickness, mode='lines', name='Desired layer'))
+    fig_desired_layer.add_trace(go.Scatter(x=layer_index, y=desired_total_thickness, mode='lines', name='Desired total'))
+    st.plotly_chart(fig_desired_layer)
+
+    fig_desired_check = go.Figure()
+    fig_desired_check.add_trace(go.Scatter(x=layer_index, y=desired_check_lam, mode='lines', name='Desired_check_lam'))
+    fig_desired_check.add_trace(go.Scatter(x=layer_index, y=desired_check_turb, mode='lines', name='Desired_check_turb'))
+    st.plotly_chart(fig_desired_check)
 
 def y_plus_calculator_page():
     st.title("Y+ Calculator")
@@ -31,10 +83,18 @@ def y_plus_calculator_page():
     st.write(f"Laminar boundary layer thickness at L [m]: {value_lam}")
     st.write(f"Turbulent boundary layer thickness at L [m]: {value_turb}")
 
-    # 시각화
-    fig, ax = plt.subplots()
-    ax.plot([0, 1, 2], [0, 1, 0])  # 예시 그래프
-    st.pyplot(fig)
+    layer = st.slider("Select the number of layers", 1, 100, 47)
+    G_r = st.slider("Select the grid growth rate", 1.0, 2.0, 1.2)
+    value_y = st.number_input("Enter value_y:", value=0.01)
+    value_lam = st.number_input("Enter value_lam:", value=0.005)
+    value_turb = st.number_input("Enter value_turb:", value=0.01)
+    y_desired = st.number_input("Enter desired layer thickness [m]:", value=0.000001)
+
+    layer_index, layer_thickness, total_thickness, check_lam, check_turb, desired_layer_thickness, desired_total_thickness, desired_check_lam, desired_check_turb = calculate_layers(
+        layer, G_r, value_y, value_lam, value_turb, y_desired)
+
+    visualize_layers(layer_index, layer_thickness, total_thickness, check_lam, check_turb, desired_layer_thickness,
+                     desired_total_thickness, desired_check_lam, desired_check_turb)
 
 if __name__ == "__main__":
     y_plus_calculator_page()
