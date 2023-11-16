@@ -69,25 +69,25 @@ def y_plus_calculator_page():
     st.title("Y+ Calculator")
 
     density, velocity, length, dynamic_viscosity, y_plus = (
-        st.number_input("공기 밀도 (kg/m³):", value=1.225, format="%.3f"),
-        st.number_input("유체의 속도 (m/s):", value=10.0),
-        st.number_input("물체의 길이 (m):", value=1.0),
-        st.number_input("공기의 동적 점성 (m^2/s):", value=1.79e-5),
+        st.number_input("Density of Air [kg/m³]:", value=1.225, format="%.3f"),
+        st.number_input("Velocity of Fluid [m/s]:", value=10.0),
+        st.number_input("Length of Object [m]:", value=1.0),
+        st.number_input("Dynamic Viscosity of Air [m²/s]:", value=1.79e-5, format="%.8f"),
         st.number_input("Y+:", value=20)
     )
 
+    formatted_dynamic_viscosity = round(dynamic_viscosity, 8)
+
     # Y 계산
-    value_y, value_lam, value_turb = Y_calculator(density, velocity, length, dynamic_viscosity, y_plus)
+    value_y, value_lam, value_turb = Y_calculator(density, velocity, length, formatted_dynamic_viscosity, y_plus)
 
     st.write(f"Desired first layer thickness [m]: {value_y}")
     st.write(f"Laminar boundary layer thickness at L [m]: {value_lam}")
     st.write(f"Turbulent boundary layer thickness at L [m]: {value_turb}")
 
     layer = st.slider("Select the number of layers", 1, 100, 47)
-    G_r = st.slider("Select the grid growth rate", 1.0, 2.0, 1.2)
-    value_y = st.number_input("Enter value_y:", value=0.01)
-    value_lam = st.number_input("Enter value_lam:", value=0.005)
-    value_turb = st.number_input("Enter value_turb:", value=0.01)
+    G_r = st.slider("Select the grid growth rate", 1.01, 2.0, 1.2)
+
     y_desired = st.number_input("Enter desired layer thickness [m]:", value=0.000001)
 
     layer_index, layer_thickness, total_thickness, check_lam, check_turb, desired_layer_thickness, desired_total_thickness, desired_check_lam, desired_check_turb = calculate_layers(
